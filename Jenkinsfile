@@ -1,18 +1,31 @@
-node {
-    def app
-
-    stage('Clone repository') {
-        checkout scm
+pipeline {
+    agent any
+    environment {
+        IMAGE_NAME = "jstojkovska/kiii-jenkins"
     }
-
-    stage('Build image') {
-        app = docker.build("jstojkovska/kiii-jenkins") 
-    }
-
-    stage('Push image') {
-        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            app.push("${env.BRANCH_NAME}-${env.BUILD_NUMBER}")
-            app.push("${env.BRANCH_NAME}-latest")
+    stages {
+        stage('Clone repository') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build image') {
+            steps {
+                script {
+                    app = docker.build("${IMAGE_NAME}")
+                }
+            }
+        }
+        stage('Push image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                        app.push("${env.BRANCH_NAME}-${env.BUILD_NUMBER}")
+                        app.push("${env.BRANCH_NAME}-latest")
+                    }
+                }
+            }
         }
     }
 }
+
